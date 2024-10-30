@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Menu</title>
+    <style>
+        body { text-align: center; margin-top: 100px; font-family: Arial, sans-serif; }
+        button { font-size: 20px; padding: 10px 20px; margin: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Simple Game Menu</h1>
+    <button onclick="startGame()">START</button>
+    <button onclick="exitGame()">EXIT</button>
+    <script>
+        const { ipcRenderer } = require('electron');
+        function startGame() { ipcRenderer.send('start-game'); }
+        function exitGame() { ipcRenderer.send('exit-game'); }
+    </script>
+</body>
+</html>
