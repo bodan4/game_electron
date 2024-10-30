@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -7,45 +7,56 @@ if (require('electron-squirrel-startup')) {
 }
 
 const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  // Create the main menu window.
+  const menuWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'src', 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   });
 
-  // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  // Load the menu HTML file.
+  menuWindow.loadFile(path.join(__dirname, 'src', 'menu.html'));
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // Open DevTools for debugging.
+  menuWindow.webContents.openDevTools();
+
+  // Listen for game start event.
+  ipcMain.on('start-game', () => {
+    // Create the game window when "START" is clicked.
+    const gameWindow = new BrowserWindow({
+      width: 800,
+      height: 600,
+      webPreferences: {
+        preload: path.join(__dirname, 'src', 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+      },
+    });
+    gameWindow.loadFile(path.join(__dirname, 'src', 'game.html'));
+  });
+
+  // Listen for the exit event to close the app.
+  ipcMain.on('exit-app', () => {
+    app.quit();
+  });
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  createWindow();
+// Initialize the app.
+app.whenReady().then(createWindow);
 
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+// Quit the app when all windows are closed (except on macOS).
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
